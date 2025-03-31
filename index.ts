@@ -66,8 +66,17 @@ const getSearchUrl = (olderThan: string | null): string => {
 };
 
 const waitForContent = async (page: Page) => {
-	await page.waitForFunction(() => !document.querySelector('div#challenge-running'), { timeout: 30000 });
-	await page.waitForSelector('.block-row', { timeout: 30000 });
+	try {
+		await page.waitForFunction(() => !document.querySelector('div#challenge-running'), { timeout: 30000 });
+		await page.waitForSelector('.block-row', { timeout: 30000 });
+	} catch (error) {
+		if (error instanceof Error && error.name === 'TimeoutError') {
+			appendFileSync("scraped_posts.json", "\n]");
+			console.log("No more posts found or timeout reached. Ending scrape.");
+			process.exit(0);
+		}
+		throw error;
+	}
 };
 
 const extractPostData = async (page: Page): Promise<Post[]> => {
